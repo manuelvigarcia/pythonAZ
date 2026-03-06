@@ -1,3 +1,34 @@
 Clone the repository:
 $ git clone -o PythonAZ https://github.com/manuelvigarcia/pythonAZ.git PythonAZ
 
+wide lines in python jupyter notebooks
+
+import numpy as np
+
+# Very wide line; adjust the number if you like
+np.set_printoptions(linewidth=200)
+
+# increase the number of edge elements
+np.set_printoptions(edgeitems=25, linewidth=200)
+
+# restoring usual NumPy behaviour
+np.set_printoptions(
+    edgeitems=3,
+    infstr='inf',
+    linewidth=75,
+    nanstr='nan',
+    precision=8,
+    suppress=False,
+    threshold=1000,
+    formatter=None,
+)
+
+
+
+And for pandas data frames:
+
+import pandas as pd
+
+pd.set_option('display.max_columns', None)   # show all columns
+pd.set_option('display.width', 200)         # increase overall display width
+
