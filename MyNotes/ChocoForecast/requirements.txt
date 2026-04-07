@@ -1,0 +1,214 @@
+Lab scenario
+
+As a data analyst at Diogo's Delicious Chocolate Company (DDCC), you have been assigned a time series forecasting project by your manager who heads the supply chain team. The company has been facing issues in the supply chain where some chocolates sell out too quickly, while others sit in inventory for 2 years. Therefore, DDCC is trying to optimize its production and inventory management, however, accurate forecasts of chocolate demand are crucial for this purpose. The project will start with a financial forecast for the next 3 months. Your manager has asked you to use exponential smoothing and Holt-Winters methods to develop reliable forecasts of chocolate sales for the next quarter. You will be working closely with the sales and marketing teams, who will provide you with historical sales data as well as any relevant information about promotions and other demand drivers. You are expected to deliver a report with your findings, including recommendations, to the supply chain team and a Python codebase that can be used to generate updated forecasts on a regular basis. Your manager will be looking for clear and concise communication of the methods, results, and accuracy of your forecasts.
+
+
+Your project assignment
+YM
+Your Manager
+Mar 9, 11:24 PM
+Hi Manuel Vicente! Thanks for working on this project for our team.
+
+As a member of the Analytics team at Diogo's Delicious Chocolate Company, you are being assigned a project to develop a time series forecasting model using the Holt-Winters method. The goal of this project is to accurately forecast chocolate sales for each month of the next quarter so that the company can effectively plan production and inventory management. In order to complete this project, you will need to have a strong understanding of time series analysis, as well as experience using the Holt-Winters method to train and test the model before using it to predict the next 3 months. It is also important that you have a good understanding of the business operations and target market of Diogo's Delicious Chocolate Company, as this will inform your model development. Please make sure to carefully document your process and the results, as you will be presenting your findings to the management team.
+
+To solve a time series forecasting problem using Holt-Winters in Python, you will need to first import the necessary libraries, load the data, and visualize it to get to know it better. The data is provided in a CSV file, called choco_monthly_revenue.csv; it contains the revenues from 2018 to 2022, on a monthly basis, and it is already in the workspace ready to be loaded. You will then need to preprocess the data, including checking for missing values. You can then fit the model to the data and make predictions for the desired forecast horizon. Finally, you should evaluate the model's performance and assess the next steps.
+Where to complete your work
+The project will be assigned one ticket at a time in a series of tasks. To complete these tasks, you’ll need to use the workspace provided. You can launch by clicking below or at any time by clicking the button in the top right of the screen.
+The tickets include assets you'll need to use in order to complete the task as well as helpful documentation you can reference for support. You can find these in the Resources folder. Please attempt these tasks on your own and click "Start review" once you're ready. I'll then provide you with solution steps to cross-reference and check your work.
+
+
+
+
+
+
+Import Libraries and Data
+
+Import the pandas library and the exponential smoothing function from statsmodels. Load the data and call it df. Include the date variable in the index. Inspect the first 5 rows of the data and describe it.
+
+Example approach
+
+    Import the pandas and exponential smoothing function by running the following:
+
+        #libraries
+        from statsmodels.tsa.holtwinters import ExponentialSmoothing
+        import pandas as pd
+
+    Load the data using the pd.read_csv() function. The index_col and parse_dates parameters should be included as the dates should be in the correct format (YYYY-MM-DD) and in the index. Inspect the first five rows by using the command df.head()
+
+        #Load the data using the pandas library
+        df = pd.read_csv("choco_monthly_revenue.csv", index_col = 0, parse_dates = True)
+        df.head()
+
+
+Plot the Data and Date Frequency
+
+Make a simple plot to get to know the data and write a first description of the data. Check the index frequency and adjust, if necessary.
+
+
+
+Example approach
+
+    Create a simple visualization by using the plot() function from Pandas
+
+        #Plotting the Time Series
+        df.plot()
+
+The data is growing over time and it appears to have seasonal cycles with larger fluctuations over time. Therefore, the seasonality should be multiplicative.
+
+Check the data frequency by calling the index and observing the outcome.
+
+    #Checking the current Frequency of the data
+    df.index
+
+The current frequency is set to None.
+
+Specify the Frequency to Monthly. Since it is the first of each month, set the frequency to Monthly Start.
+
+    #specify that the data frequency is monthly start
+    df = df.asfreq("MS")
+    df.index
+
+The new frequency is "Monthly Start" or "MS".
+
+
+
+Understand the Seasonality
+
+Import the functions to better get to know the seasonal patterns of the data. Use them to visualize the monthly cycles.
+
+
+Example approach
+
+    Import the two functions from the documentation
+
+        #Import seasonality functions
+        from statsmodels.tsa.seasonal import seasonal_decompose
+        from statsmodels.graphics.tsaplots import month_plot
+
+    Use the seasonal decompose function and plot the object created
+
+        #Seasonal Decomposition
+        #since the fluctuations seem to grow overtime, the appropriate model is multiplicative
+        #period: 12 for monthly, 52 for weekly, 7 for daily, 4 for quarterly
+        decomposition = seasonal_decompose(x = df.revenue,
+                                           model = 'multiplicative',
+                                           period = 12)
+        decomposition.plot();
+
+
+The trend is growing over time, though it is currently plateauing. The seasonal cycles have a strong peak in what seems to be November.
+
+Look closer into the monthly seasonality with the month_plot() function.
+
+    #Seasonal graphs
+    month_plot(df.revenue);
+
+The month with the highest seasonality is indeed November, followed by October. February and August rank last.
+
+
+
+
+Plot the Auto-correlation
+
+Import the function to plot auto-correlation. Assess which periods contribute the most information for the time series forecasting.
+
+Example approach
+
+    Import the function to plot the auto-correlation.
+
+        #Import the function to plot the auto-correlation
+        from statsmodels.graphics.tsaplots import plot_acf
+
+    Plot the auto-correlation by including the time series inside the function.
+
+        #Auto-correlation plot
+        plot_acf(df.revenue);
+
+The period that correlates the most, and therefore, has the most information is the month just before. The second period with the most information is the one 12 months before.
+
+
+
+
+Train a Holt-Winters Model
+
+Split the data into training and test sets. The test data should have 3 months. Fit a Holt-Winters model to the data. Since the Time Series is plateauing, set the parameters of trend and seasonal cycles to additive.
+
+
+Example approach
+
+    Split the data into training and test set. Slice the data by isolating the last 3 months as test data.
+
+        #Training and test set
+        test_months = 3
+        training = df.iloc[:-test_months, :]
+        test = df.iloc[-test_months:, :]
+        test.tail()
+
+Build the Holt-Winters model by specifying the Trend and Seasonal model types, and the seasonality frequency.
+
+    #forecasting model
+    #endog is the time series
+    #trend and seasonal can be either 'add' or 'mul' for additive and multiplicative
+    #seasonal_periods is the frequency of the data.
+    model = ExponentialSmoothing(endog = training.revenue,
+                                 trend = 'add',
+                                 seasonal = 'add',
+                                 seasonal_periods = 12).fit()
+
+
+Predict and Visualize the Predictions with the Historical Data
+
+Use the Holt-Winters model to predict the 3 months, same as the test data. Plot the training (only 2022), test, and predictions, then make an initial assessment of the model.
+
+Example approach
+
+    Use the predict function for the forecast.
+
+        #predictions
+        #steps is the forecasting horizon.
+        #The series is optionally renamed to HW to improve the visualization afterward
+        predictions = model.forecast(steps = len(test)).rename("HW")
+        predictions.head()
+
+Plot the training, test, and predictions. Include only the training data after 2022 for a better visualization.
+
+    #visualization
+    #Customize the plot size with the figsize parameter to improve the visualization
+    #Set legend = True to include a legend of the line graphs
+    training['revenue']['2022-01-01':].plot(figsize = (12,6), legend = True)
+    test['revenue'].plot(legend = True)
+    predictions.plot(legend = True)
+
+The model predictions follow the test data extremely closely. The month with the largest deviation is November.
+
+
+
+Assess the Model with MAE and RMSE
+
+Import the functions in the documentation to evaluate the model. Use the Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Predict the Next Quarter
+
+Use the complete data in the model and predict the next 3 months. Visualize the results and interpret them. Compute the growth expected for Q1 2023.
